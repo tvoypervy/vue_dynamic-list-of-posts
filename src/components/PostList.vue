@@ -1,4 +1,6 @@
 <script setup>
+import PostLoader from './PostLoader.vue';
+
 const props = defineProps({
   posts: Array,
   isLoading: Boolean,
@@ -7,7 +9,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['selectedPost', 'openNew']);
-
 </script>
 
 <template>
@@ -19,15 +20,21 @@ const emit = defineEmits(['selectedPost', 'openNew']);
           <button 
             type="button" 
             class="button is-link"
-            @click="$emit('openNew')"
+            @click="emit('openNew')"
           >
             Add New Post
           </button>
         </div>
 
         <PostLoader v-if="isLoading" />
-        <div v-else-if="error"> Error: {{ error }}</div>
-        <div v-else-if="posts.length === 0">No posts yet</div>
+        
+        <div v-else-if="error" class="notification is-danger"> 
+          Error: {{ error }}
+        </div>
+        
+        <div v-else-if="posts.length === 0" class="notification is-info">
+          No posts yet
+        </div>
 
         <table
           v-else
@@ -52,9 +59,9 @@ const emit = defineEmits(['selectedPost', 'openNew']);
                     'is-link': selectedPost && selectedPost.id === post.id,
                     'is-light': !selectedPost || selectedPost.id !== post.id,
                   }"
-                  @click="$emit('selectedPost', selectedPost && selectedPost.id === post.id ? null : post)"
+                  @click="emit('selectedPost', selectedPost?.id === post.id ? null : post)"
                 >
-                  {{ selectedPost && selectedPost.id === post.id ? 'Close' : 'Open' }}
+                  {{ selectedPost?.id === post.id ? 'Close' : 'Open' }}
                 </button>
               </td>
             </tr>

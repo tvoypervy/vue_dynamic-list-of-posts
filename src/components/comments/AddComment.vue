@@ -18,7 +18,7 @@ const authorName = ref('');
 const email = ref('');
 const body = ref('');
 const isLoading = ref(false);
-const error = ref('');
+const error = ref(''); // Ця змінна тепер буде відображатися
 
 const BASE_URL = 'https://mate.academy/students-api';
 
@@ -27,21 +27,10 @@ const errors = ref({
   email: '',
   body: ''
 });
-watch(authorName, () => {
-  if (errors.value.name) {
-    errors.value.name = '';
-  }
-});
-watch(email, () => {
-  if (errors.value.email) {
-    errors.value.email = '';
-  }
-});
-watch(body, () => {
-  if (errors.value.body) {
-    errors.value.body = '';
-  }
-});
+
+watch(authorName, () => { if (errors.value.name) errors.value.name = ''; });
+watch(email, () => { if (errors.value.email) errors.value.email = ''; });
+watch(body, () => { if (errors.value.body) errors.value.body = ''; });
 
 function validate() {
   errors.value = {};
@@ -63,8 +52,9 @@ function validate() {
 
 async function submitComment() {
   if (!validate()) return;
+  
   isLoading.value = true;
-  error.value = '';
+  error.value = ''; // Скидаємо загальну помилку перед запитом
 
   const newComment = {
     postId: props.postId,
@@ -81,30 +71,43 @@ async function submitComment() {
       },
       body: JSON.stringify(newComment),
     });
+    
     if (!res.ok) {
       throw new Error('Failed to submit comment');
     }
+    
     const createdComment = await res.json();
     emit('created', createdComment);
+    
+    // Очищення форми після успіху
+    authorName.value = '';
+    email.value = '';
     body.value = '';
   } catch (err) {
     console.error(err);
     error.value = 'Failed to submit comment. Please try again.';
-    } finally {
+  } finally {
     isLoading.value = false;
   }
 }
 
 function cancelForm() {
   errors.value = { name: '', email: '', body: '' };
+  error.value = '';
   body.value = '';
   emit('cancel');
 }
-  </script>
+</script>
 
 <template>
   <div class="box mt-3">
-    <!-- Name -->
+    <h2 class="title is-5">Add New Comment</h2>
+
+    <div v-if="error" class="notification is-danger is-light">
+      <button class="delete" type="button" @click="error = ''"></button>
+      {{ error }}
+    </div>
+
     <div class="field" data-cy="NameField">
       <label class="label" :for="`comment-author-name-${name}`">Name</label>
       <div class="control has-icons-left has-icons-right">
@@ -115,6 +118,7 @@ function cancelForm() {
           placeholder="Your name"
           class="input"
           :class="{ 'is-danger': errors.name }"
+          :disabled="isLoading"
         />
         <span class="icon is-small is-left">
           <i class="fas fa-user"></i>
@@ -126,7 +130,6 @@ function cancelForm() {
       <p v-if="errors.name" class="help is-danger">{{ errors.name }}</p>
     </div>
 
-    <!-- Email -->
     <div class="field" data-cy="EmailField">
       <label class="label" :for="`comment-email-${name}`">Email</label>
       <div class="control has-icons-left has-icons-right">
@@ -137,6 +140,7 @@ function cancelForm() {
           placeholder="Your email"
           class="input"
           :class="{ 'is-danger': errors.email }"
+          :disabled="isLoading"
         />
         <span class="icon is-small is-left">
           <i class="fas fa-envelope"></i>
@@ -148,7 +152,6 @@ function cancelForm() {
       <p v-if="errors.email" class="help is-danger">{{ errors.email }}</p>
     </div>
 
-    <!-- Comment Body -->
     <div class="field" data-cy="BodyField">
       <label class="label" :for="`comment-${name}`">Comment</label>
       <div class="control">
@@ -158,15 +161,30 @@ function cancelForm() {
           placeholder="Write your comment..."
           class="textarea"
           :class="{ 'is-danger': errors.body }"
+          :disabled="isLoading"
         ></textarea>
       </div>
       <p v-if="errors.body" class="help is-danger">{{ errors.body }}</p>
     </div>
 
-    <!-- Buttons -->
     <div class="buttons mt-3">
-      <button type="button" class="button is-primary" :class="{ 'is-loading': isLoading }" @click="submitComment">Submit</button>
-      <button type="button" class="button" @click="cancelForm">Cancel</button>
+      <button 
+        type="button" 
+        class="button is-primary" 
+        :class="{ 'is-loading': isLoading }" 
+        :disabled="isLoading"
+        @click="submitComment"
+      >
+        Submit
+      </button>
+      <button 
+        type="button" 
+        class="button" 
+        :disabled="isLoading"
+        @click="cancelForm"
+      >
+        Cancel
+      </button>
     </div>
-  </div>Collapse comment
+  </div>
 </template>

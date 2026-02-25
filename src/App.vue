@@ -4,6 +4,7 @@ import PostList from './components/PostList.vue';
 import SideBar from './components/SideBar.vue';
 import Login from './components/Login.vue';
 
+// Стан додатку
 const user = ref(null);
 const isSideBarOpen = ref(false);
 const selectedPost = ref(null);
@@ -13,6 +14,7 @@ const error = ref(null);
 
 const BASE_URL = 'https://mate.academy/students-api';
 
+// Завантаження постів користувача
 async function fetchUserPosts(userId) {
   isLoading.value = true;
   error.value = null;
@@ -27,11 +29,13 @@ async function fetchUserPosts(userId) {
   }
 }
 
+// Авторизація
 async function handleLogin(newUser) {
   user.value = newUser;
   await fetchUserPosts(newUser.id);
 }
 
+// Вихід
 function handleLogout() {
   user.value = null;
   posts.value = [];
@@ -39,22 +43,33 @@ function handleLogout() {
   isSideBarOpen.value = false;
 }
 
+// Відкриття для створення нового поста
 function openNewSideBar() {
   selectedPost.value = null;
   isSideBarOpen.value = true;
 }
 
+// ВИПРАВЛЕНО: Обробка вибору поста або натискання "Close"
 function openPostSideBar(post) {
   selectedPost.value = post;
-  isSideBarOpen.value = true;
+  
+  if (post === null) {
+    // Якщо прийшов null, закриваємо сайдбар
+    isSideBarOpen.value = false;
+  } else {
+    // Якщо прийшов об'єкт поста, відкриваємо його
+    isSideBarOpen.value = true;
+  }
 }
 
+// Додавання нового поста (викликається з SideBar)
 function addPost(post) {
   posts.value.push(post);
   selectedPost.value = post;
   isSideBarOpen.value = true;
 }
 
+// Оновлення існуючого поста
 function updatePost(updatedPost) {
   const index = posts.value.findIndex(p => p.id === updatedPost.id);
   if (index !== -1) {
@@ -62,49 +77,57 @@ function updatePost(updatedPost) {
   }
 }
 
+// Видалення поста
 function deletePost(postId) {
   posts.value = posts.value.filter(p => p.id !== postId);
   isSideBarOpen.value = false;
+  selectedPost.value = null;
 }
 
 </script>
 
 <template>
-  <nav class="navbar" 
-    role="navigation"
-    aria-label="main navigation"
-    >
+  <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-end" v-if="user">
       <div class="navbar-item">
         <div class="buttons">
           <div class="mr-5 mb-2">
             <p>User: {{ user?.name }}</p>
           </div>
-            <a class="button is-light" @click="handleLogout">Logout</a>          
+          <button class="button is-light" @click="handleLogout">Logout</button>
         </div>
       </div>
-
     </div>
   </nav>
 
-  <Login v-if="!user" @login="handleLogin" />
+  <main class="section">
+    <div class="container">
+      <Login v-if="!user" @login="handleLogin" />
 
-  <div v-else>
-    <PostList 
-      :posts="posts" 
-      :isLoading="isLoading"
-      :error="error"
-      :selectedPost="selectedPost"
-      @openNew="openNewSideBar"
-      @selectedPost="openPostSideBar" 
-    />
-    <SideBar 
-      :isSideBarOpen="isSideBarOpen" 
-      :selectedPost="selectedPost"
-      :currentUser="user"
-      @created="addPost"
-      @save="updatePost"
-      @delete="deletePost"
-    />
+      <div v-else class="columns">
+        <div class="column">
+          <PostList 
+            :posts="posts" 
+            :isLoading="isLoading"
+            :error="error"
+            :selectedPost="selectedPost"
+            @openNew="openNewSideBar"
+            @selectedPost="openPostSideBar" 
+          />
+        </div>
+        
+        <div class="column is-one-third" v-if="isSideBarOpen">
+          <SideBar 
+            :isSideBarOpen="isSideBarOpen" 
+            :selectedPost="selectedPost"
+            :currentUser="user"
+            @created="addPost"
+            @save="updatePost"
+            @delete="deletePost"
+            @close="isSideBarOpen = false"
+          />
+        </div>
+      </div>
     </div>
+  </main>
 </template>

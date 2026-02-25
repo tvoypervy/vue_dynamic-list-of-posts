@@ -101,16 +101,22 @@ async function addComment(newComment) {
 }
 
 async function deleteComment(commentId) {
+  const originalComments = [...comments.value];
+
+  comments.value = comments.value.filter(c => c.id !== commentId);
+  commentsError.value = '';
+
   try {
     const res = await fetch(`${BASE_URL}/comments/${commentId}`, {
       method: 'DELETE',
     });
+
     if (!res.ok) {
       throw new Error('Failed to delete comment');
     }
-    comments.value = comments.value.filter(c => c.id !== commentId);
   } catch (err) {
     console.error(err);
+    comments.value = originalComments;
     commentsError.value = 'Failed to delete comment. Please try again.';
   }
 }
